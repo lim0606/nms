@@ -19,7 +19,7 @@ end
 --print(boxes)
 
 timer:reset()
-local keep_inds_cpu = nms.cpu_nms(boxes:cuda(), overlap)
+local keep_inds_cpu = nms.cpu_nms(boxes, overlap)
 --print(keep_inds_cpu)
 --print(boxes:index(1, keep_inds_cpu))
 print(('Elapsed time (cpu) %.4f sec'):format(timer:time().real))

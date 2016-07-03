@@ -17,7 +17,6 @@ Torch/Lua wrapper for the gpu implementation of non-maximum suppression, which i
 
 dependencies = {
    "torch >= 7.0",
-   "nn",
 }
 
 build = {

@@ -36,6 +36,9 @@ local function gpu_nms(boxes, nms_overlap_thresh)
 end
 rawset(nms, 'gpu_nms', gpu_nms)
 
+--[[
+  This function is copied from https://github.com/fmassa/object-detection.torch
+]]
 local function cpu_nms(boxes, overlap)
 
   local pick = torch.LongTensor()
@@ -51,13 +54,13 @@ local function cpu_nms(boxes, overlap)
   local s = boxes[{{},-1}]
 
   local area = boxes.new():resizeAs(s):zero()
-  if torch.type(boxes) == 'torch.CudaTensor' then
-    area:copy(x2-x1+1)
-    area:cmul(y2-y1+1)
-  else
+  --if torch.type(boxes) == 'torch.CudaTensor' then
+  --  area:copy(x2-x1+1)
+  --  area:cmul(y2-y1+1)
+  --else
     area:map2(x2,x1,function(xx,xx2,xx1) return xx2-xx1+1 end)
     area:map2(y2,y1,function(xx,xx2,xx1) return xx*(xx2-xx1+1) end)
-  end
+  --end
 
   local vals, I = s:sort(1)
 
@@ -90,17 +93,17 @@ local function cpu_nms(boxes, overlap)
     yy2:index(y2,1,I)
     yy2:cmin(y2[i])
 
-    if torch.type(boxes) == 'torch.CudaTensor' then
-      w = torch.cmax(xx2-xx1+1, 0)
-      h = torch.cmax(yy2-yy1+1, 0)
-    else
+    --if torch.type(boxes) == 'torch.CudaTensor' then
+    --  w = torch.cmax(xx2-xx1+1, 0)
+    --  h = torch.cmax(yy2-yy1+1, 0)
+    --else
       w = boxes.new()
       h = boxes.new()
       w:resizeAs(xx2):zero()
       w:map2(xx2,xx1,function(xx,xxx2,xxx1) return math.max(xxx2-xxx1+1,0) end)
       h:resizeAs(yy2):zero()
       h:map2(yy2,yy1,function(xx,yyy2,yyy1) return math.max(yyy2-yyy1+1,0) end)
-    end
+    --end
     local inter = w
     inter:cmul(h)
 
@@ -114,3 +117,12 @@ local function cpu_nms(boxes, overlap)
   return pick
 end
 rawset(nms, 'cpu_nms', cpu_nms)
+
+local function func(boxes, nms_overlap_thresh)
+  if torch.type(boxes) == 'torch.CudaTensor' then 
+    return gpu_nms(boxes, nms_overlap_thresh)
+  else
+    return cpu_nms(boxes, nms_overlap_thresh) 
+  end
+end
+rawset(nms, 'func', func)
